@@ -136,6 +136,12 @@
                   <input type="checkbox" id="alwaysShowCalendars"> alwaysShowCalendars
                 </label>
               </div>
+			  
+			  <div class="checkbox">
+                <label>
+                  <input type="checkbox" id="inline"> inline
+                </label>
+              </div>
 
             </div>
             <div class="col-md-4">
@@ -190,6 +196,11 @@
                 <input type="text" class="form-control" id="cancelClass" value="btn-default">
               </div>
 
+              <div class="form-group">
+                <label for="clearClass">clearClass</label>
+                <input type="text" class="form-control" id="clearClass" value="btn-default">
+              </div>
+
             </div>
 
           </div>
@@ -199,7 +210,7 @@
 
         <div class="row">
 
-          <div class="col-md-4 col-md-offset-2 demo">
+          <div class="col-md-6 demo">
             <h4>Your Date Range Picker</h4>
             <input type="text" id="config-demo" class="form-control">
             <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>
@@ -218,7 +229,6 @@
       </div>
 
       <style type="text/css">
-      .demo { position: relative; }
       .demo i {
         position: absolute; bottom: 10px; right: 24px; top: auto; cursor: pointer;
       }
@@ -326,6 +336,9 @@
           if ($('#alwaysShowCalendars').is(':checked'))
             options.alwaysShowCalendars = true;
 
+          if ($('#inline').is(':checked'))
+            options.inline = true;
+
           if ($('#parentEl').val().length)
             options.parentEl = $('#parentEl').val();
 
@@ -355,6 +368,9 @@
 
           if ($('#cancelClass').val().length && $('#cancelClass').val() != 'btn-default')
             options.cancelClass = $('#cancelClass').val();
+
+          if ($('#clearClass').val().length && $('#clearClass').val() != 'btn-default')
+            options.clearClass = $('#clearClass').val();
 
           $('#config-text').val("$('#demo').daterangepicker(" + JSON.stringify(options, null, '    ') + ", function(start, end, label) {\n  console.log(\"New date range selected: ' + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD') + ' (predefined range: ' + label + ')\");\n});");
 

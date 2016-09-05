@@ -171,6 +171,14 @@
       color: #ccc;
       cursor: not-allowed; }
 
+.inlinedaterangepicker.daterangepicker {
+  top: 0;
+  left: 0;}
+  .inlinedaterangepicker.daterangepicker:before {
+    top: 0;
+    border: none;
+  }
+
 .ranges {
   font-size: 11px;
   float: none;

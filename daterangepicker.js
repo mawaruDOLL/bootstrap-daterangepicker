@@ -49,6 +49,7 @@
         this.linkedCalendars = true;
         this.autoUpdateInput = true;
         this.alwaysShowCalendars = false;
+        this.inline = false;
         this.ranges = {};
 
         this.opens = 'right';
@@ -62,6 +63,7 @@
         this.buttonClasses = 'btn btn-sm';
         this.applyClass = 'btn-success';
         this.cancelClass = 'btn-default';
+        this.clearClass = 'btn-default';
 
         this.locale = {
             direction: 'ltr',
@@ -69,6 +71,7 @@
             separator: ' - ',
             applyLabel: 'Apply',
             cancelLabel: 'Cancel',
+            clearLabel: 'Clear',
             weekLabel: 'W',
             customRangeLabel: 'Custom Range',
             daysOfWeek: moment.weekdaysMin(),
@@ -120,11 +123,23 @@
                     '<div class="range_inputs">' +
                         '<button class="applyBtn" disabled="disabled" type="button"></button> ' +
                         '<button class="cancelBtn" type="button"></button>' +
+                        '<button class="clearBtn" type="button"></button>' +
                     '</div>' +
                 '</div>' +
             '</div>';
 
-        this.parentEl = (options.parentEl && $(options.parentEl).length) ? $(options.parentEl) : $(this.parentEl);
+        if (options.parentEl && $(options.parentEl).length) {
+            this.parentEl = $(options.parentEl)
+        }
+        else {
+            if (options.inline) {
+                this.parentEl = this.element.parent();
+            }
+            else {
+                this.parentEl = $(this.parentEl);
+            }
+        }
+
         this.container = $(options.template).appendTo(this.parentEl);
 
         //
@@ -204,6 +219,9 @@
         if (typeof options.cancelClass === 'string')
             this.cancelClass = options.cancelClass;
 
+        if (typeof options.clearClass === 'string')
+            this.clearClass = options.clearClass;
+
         if (typeof options.dateLimit === 'object')
             this.dateLimit = options.dateLimit;
 
@@ -266,6 +284,9 @@
 
         if (typeof options.alwaysShowCalendars === 'boolean')
             this.alwaysShowCalendars = options.alwaysShowCalendars;
+
+        if (typeof options.inline === 'boolean')
+            this.inline = options.inline;
 
         // update day names order to firstDay
         if (this.locale.firstDay != 0) {
@@ -386,21 +407,36 @@
             this.container.addClass('show-calendar');
         }
 
-        this.container.addClass('opens' + this.opens);
+        //apply CSS classes and labels to buttons
+        this.container.find('.applyBtn, .cancelBtn, .clearBtn').addClass(this.buttonClasses);
+        if (this.applyClass.length)
+            this.container.find('.applyBtn').addClass(this.applyClass);
+        if (this.cancelClass.length)
+            this.container.find('.cancelBtn').addClass(this.cancelClass);
+        if (this.clearClass.length)
+            this.container.find('.clearBtn').addClass(this.clearClass);
+        this.container.find('.applyBtn').html(this.locale.applyLabel);
+        this.container.find('.cancelBtn').html(this.locale.cancelLabel);
+        this.container.find('.clearBtn').html(this.locale.clearLabel);
+
+        if (options.inline) {
+            this.container.removeClass('dropdown-menu').addClass('inlinedaterangepicker');
+
+            this.container.find('.applyBtn, .cancelBtn').addClass('hidden');
+        }
+        else {
+            this.container.addClass('opens' + this.opens);
+
+            this.container.find('.clearBtn').addClass('hidden');
+           
+        }
 
         //swap the position of the predefined ranges if opens right
         if (typeof options.ranges !== 'undefined' && this.opens == 'right') {
             this.container.find('.ranges').prependTo( this.container.find('.calendar.left').parent() );
         }
 
-        //apply CSS classes and labels to buttons
-        this.container.find('.applyBtn, .cancelBtn').addClass(this.buttonClasses);
-        if (this.applyClass.length)
-            this.container.find('.applyBtn').addClass(this.applyClass);
-        if (this.cancelClass.length)
-            this.container.find('.cancelBtn').addClass(this.cancelClass);
-        this.container.find('.applyBtn').html(this.locale.applyLabel);
-        this.container.find('.cancelBtn').html(this.locale.cancelLabel);
+        
 
         //
         // event listeners
@@ -448,6 +484,10 @@
         } else if (this.element.is('input') && this.autoUpdateInput) {
             this.element.val(this.startDate.format(this.locale.format));
             this.element.trigger('change');
+        }
+
+        if (options.inline) {
+            this.show()
         }
 
     };
@@ -1033,59 +1073,61 @@
         },
 
         move: function() {
-            var parentOffset = { top: 0, left: 0 },
-                containerTop;
-            var parentRightEdge = $(window).width();
-            if (!this.parentEl.is('body')) {
-                parentOffset = {
-                    top: this.parentEl.offset().top - this.parentEl.scrollTop(),
-                    left: this.parentEl.offset().left - this.parentEl.scrollLeft()
-                };
-                parentRightEdge = this.parentEl[0].clientWidth + this.parentEl.offset().left;
-            }
-
-            if (this.drops == 'up')
-                containerTop = this.element.offset().top - this.container.outerHeight() - parentOffset.top;
-            else
-                containerTop = this.element.offset().top + this.element.outerHeight() - parentOffset.top;
-            this.container[this.drops == 'up' ? 'addClass' : 'removeClass']('dropup');
-
-            if (this.opens == 'left') {
-                this.container.css({
-                    top: containerTop,
-                    right: parentRightEdge - this.element.offset().left - this.element.outerWidth(),
-                    left: 'auto'
-                });
-                if (this.container.offset().left < 0) {
-                    this.container.css({
-                        right: 'auto',
-                        left: 9
-                    });
+            if (!this.inline) {
+                var parentOffset = { top: 0, left: 0 },
+                    containerTop;
+                var parentRightEdge = $(window).width();
+                if (!this.parentEl.is('body')) {
+                    parentOffset = {
+                        top: this.parentEl.offset().top - this.parentEl.scrollTop(),
+                        left: this.parentEl.offset().left - this.parentEl.scrollLeft()
+                    };
+                    parentRightEdge = this.parentEl[0].clientWidth + this.parentEl.offset().left;
                 }
-            } else if (this.opens == 'center') {
-                this.container.css({
-                    top: containerTop,
-                    left: this.element.offset().left - parentOffset.left + this.element.outerWidth() / 2
-                            - this.container.outerWidth() / 2,
-                    right: 'auto'
-                });
-                if (this.container.offset().left < 0) {
+
+                if (this.drops == 'up')
+                    containerTop = this.element.offset().top - this.container.outerHeight() - parentOffset.top;
+                else
+                    containerTop = this.element.offset().top + this.element.outerHeight() - parentOffset.top;
+                this.container[this.drops == 'up' ? 'addClass' : 'removeClass']('dropup');
+
+                if (this.opens == 'left') {
                     this.container.css({
-                        right: 'auto',
-                        left: 9
+                        top: containerTop,
+                        right: parentRightEdge - this.element.offset().left - this.element.outerWidth(),
+                        left: 'auto'
                     });
-                }
-            } else {
-                this.container.css({
-                    top: containerTop,
-                    left: this.element.offset().left - parentOffset.left,
-                    right: 'auto'
-                });
-                if (this.container.offset().left + this.container.outerWidth() > $(window).width()) {
+                    if (this.container.offset().left < 0) {
+                        this.container.css({
+                            right: 'auto',
+                            left: 9
+                        });
+                    }
+                } else if (this.opens == 'center') {
                     this.container.css({
-                        left: 'auto',
-                        right: 0
+                        top: containerTop,
+                        left: this.element.offset().left - parentOffset.left + this.element.outerWidth() / 2
+                                - this.container.outerWidth() / 2,
+                        right: 'auto'
                     });
+                    if (this.container.offset().left < 0) {
+                        this.container.css({
+                            right: 'auto',
+                            left: 9
+                        });
+                    }
+                } else {
+                    this.container.css({
+                        top: containerTop,
+                        left: this.element.offset().left - parentOffset.left,
+                        right: 'auto'
+                    });
+                    if (this.container.offset().left + this.container.outerWidth() > $(window).width()) {
+                        this.container.css({
+                            left: 'auto',
+                            right: 0
+                        });
+                    }
                 }
             }
         },
@@ -1093,21 +1135,23 @@
         show: function(e) {
             if (this.isShowing) return;
 
-            // Create a click proxy that is private to this instance of datepicker, for unbinding
-            this._outsideClickProxy = $.proxy(function(e) { this.outsideClick(e); }, this);
+            if (!this.inline) {
+                // Create a click proxy that is private to this instance of datepicker, for unbinding
+                this._outsideClickProxy = $.proxy(function(e) { this.outsideClick(e); }, this);
 
-            // Bind global datepicker mousedown for hiding and
-            $(document)
-              .on('mousedown.daterangepicker', this._outsideClickProxy)
-              // also support mobile devices
-              .on('touchend.daterangepicker', this._outsideClickProxy)
-              // also explicitly play nice with Bootstrap dropdowns, which stopPropagation when clicking them
-              .on('click.daterangepicker', '[data-toggle=dropdown]', this._outsideClickProxy)
-              // and also close when focus changes to outside the picker (eg. tabbing between controls)
-              .on('focusin.daterangepicker', this._outsideClickProxy);
+                // Bind global datepicker mousedown for hiding and
+                $(document)
+                    .on('mousedown.daterangepicker', this._outsideClickProxy)
+                    // also support mobile devices
+                    .on('touchend.daterangepicker', this._outsideClickProxy)
+                    // also explicitly play nice with Bootstrap dropdowns, which stopPropagation when clicking them
+                   .on('click.daterangepicker', '[data-toggle=dropdown]', this._outsideClickProxy)
+                   // and also close when focus changes to outside the picker (eg. tabbing between controls)
+                   .on('focusin.daterangepicker', this._outsideClickProxy);
 
-            // Reposition the picker if the window is resized while it's open
-            $(window).on('resize.daterangepicker', $.proxy(function(e) { this.move(e); }, this));
+              // Reposition the picker if the window is resized while it's open
+              $(window).on('resize.daterangepicker', $.proxy(function(e) { this.move(e); }, this));
+            }
 
             this.oldStartDate = this.startDate.clone();
             this.oldEndDate = this.endDate.clone();
@@ -1389,7 +1433,9 @@
         },
 
         clickApply: function(e) {
-            this.hide();
+			if (!this.inline) {
+				this.hide();
+			}
             this.element.trigger('apply.daterangepicker', this);
         },
 
